@@ -1,61 +1,178 @@
-# CMPG325-2026-063-Phenyo-Cultural-Tours
+# CMPG325-2026-063 — Phenyo Cultural Tours (Potchefstroom)
 
-# CMPG325-2026-063 - Phenyo Cultural Tours (Potchefstroom)
+**Client ID:** CLI-063
+**IP Address Block:** `172.30.38.0/23`
+**Security Constraint:** All device administration must be secured
+**Security Challenge:** Port Security (switchport access control)
+**Change Request CR5:** Support 25% user growth without renumbering
 
-**Student No:** 46898064  
-**Client ID:** CLI-063  
-**IP Block:** 172.30.38.0/23  
-**Constraint:** All device administration must be secured  
-**Challenge:** Port Security (switchport access control)  
-**Change Request CR5:** 25% user growth without renumbering
+## 1. Project Overview
 
-## Project Overview
+Phenyo Cultural Tours is a tourism company based in Potchefstroom, South Africa. The company requires a secure and scalable network to support Booking, Tour Operations, Finance, Marketing, Server, Management, and Guest Wi-Fi services.
 
-Phenyo Cultural Tours is a tourism company in Potchefstroom requiring a secure, scalable network for bookings, tour operations, finance and guest services.
+This project implements a VLAN-based network using a multilayer core switch, access switches, centralized DHCP and DNS services, a web server, wireless access points, and a wireless LAN controller.
 
-## IP Addressing Plan - VLSM with CR5 Growth
+## 2. Repository Structure
 
-Total block: 172.30.38.0/23 (510 usable host addresses) - mask 255.255.254.0
+The repository is organized into the following folders:
 
-| VLAN | Dept | Subnet | Usable Host Range | Gateway | Growth Proof |
-| --- | --- | --- | --- | --- | --- |
-| 10 | Booking | 172.30.38.0/26 | .2-.62 | 172.30.38.1 | 30 -> 38, 24 spare |
-| 20 | Tour Ops | 172.30.38.64/26 | .66-.126 | 172.30.38.65 | 30 -> 38, 24 spare |
-| 30 | Finance | 172.30.38.128/27 | .130-.158 | 172.30.38.129 | 15 -> 19, 11 spare |
-| 40 | Marketing | 172.30.38.160/27 | .162-.190 | 172.30.38.161 | 15 -> 19, 11 spare |
-| 99 | Servers | 172.30.38.192/27 | .194-.222 | 172.30.38.193 | 10 -> 13, 17 spare |
-| 80 | Guest WiFi | 172.30.39.0/25 | .2-.126 | 172.30.39.1 | 60 -> 75, 51 spare |
-| 1 | Mgmt | 172.30.39.128/25 | .130-.254 | 172.30.39.129 | reserve |
-| Reserve | Future | 172.30.38.224/27 | .225-.254 | - | For CR5 / future expansion |
+| Folder          | Purpose                                        |
+| --------------- | ---------------------------------------------- |
+| `Configs/`      | Network device configuration notes and backups |
+| `Design/`       | Network topology diagram and addressing plan   |
+| `Docs/`         | Project report and supporting documentation    |
+| `PacketTracer/` | Cisco Packet Tracer project file               |
+| `Testing/`      | Screenshots and connectivity test evidence     |
 
-### CR5 Verification
+The main `README.md` is located in the repository root.
 
-CR5 is satisfied because the existing VLSM subnets provide sufficient capacity for the required 25% user growth within each existing network. Booking can grow from 30 to 38 users, Tour Operations from 30 to 38, Finance from 15 to 19, Marketing from 15 to 19, and Guest WiFi from 60 to 75 without changing the existing subnet addresses. Therefore, no renumbering of the existing networks is required. The 172.30.38.224/27 reserve subnet provides an additional 30 usable addresses for future expansion.
+## 3. Network Topology
 
-## Topology
+The network consists of:
 
-See `/Design/topology.png` - Core L3 3560 + 4 Access 2960 + ISP Router + Server Farm + 2 APs
+* One Cisco 3560 multilayer core switch.
+* Four Cisco 2960 access switches.
+* One ISP router.
+* Two servers for network and web services.
+* One WLC-3504 wireless LAN controller.
+* Wireless access points for staff and guest connectivity.
+* Wired departmental PCs and wireless laptops.
 
-## Security Constraint Implementation
+**Topology diagram:** `Design/topology.png`
 
-- enable secret, service password-encryption
-- console & VTY passwords, SSH only, local admin user
-- banner motd
+## 4. IP Addressing Plan — VLSM
 
-## Port Security
+The assigned address block is `172.30.38.0/23`, with subnet mask `255.255.254.0` and 510 usable IPv4 addresses across the entire block.
 
-- Configure switchport port security on access ports
-- Sticky MAC address learning
-- Maximum 2 MAC addresses per access port
-- Violation mode: restrict
-- Verify configuration with appropriate show commands
+| VLAN | Department      | Network            | Usable Host Range    | Gateway         |
+| ---: | --------------- | ------------------ | -------------------- | --------------- |
+|   10 | Booking         | `172.30.38.0/26`   | `172.30.38.1–62`*    | `172.30.38.1`   |
+|   20 | Tour Operations | `172.30.38.64/26`  | `172.30.38.65–126`*  | `172.30.38.65`  |
+|   30 | Finance         | `172.30.38.128/27` | `172.30.38.129–158`* | `172.30.38.129` |
+|   40 | Marketing       | `172.30.38.160/27` | `172.30.38.161–190`* | `172.30.38.161` |
+|   99 | Servers         | `172.30.38.192/27` | `172.30.38.193–222`* | `172.30.38.193` |
+|   80 | Guest Wi-Fi     | `172.30.39.0/25`   | `172.30.39.1–126`*   | `172.30.39.1`   |
+|    1 | Management      | `172.30.39.128/25` | `172.30.39.129–254`* | `172.30.39.129` |
+|    — | Future Reserve  | `172.30.38.224/27` | `172.30.38.225–254`  | Not assigned    |
 
-## Network Services
+*The usable range includes the gateway address, which is reserved and must not be assigned to a client.
 
-- Inter-VLAN routing on the Core L3 3560 using SVIs
-- Centralized DHCP/DNS server: 172.30.38.195
-- Web server: 172.30.38.194
-- DNS domain: phenyotours.local
-- Website: www.phenyotours.co.za
-- Guest WiFi: VLAN 80
-- Management: VLAN 1
+### Infrastructure IP Addresses
+
+| Device or Service             | IP Address      |
+| ----------------------------- | --------------- |
+| DHCP/DNS Server (`SERVER-01`) | `172.30.38.195` |
+| Web Server (`SERVER-WEB`)     | `172.30.38.194` |
+| WLC Management                | `172.30.39.130` |
+| Management Gateway            | `172.30.39.129` |
+
+The future reserve subnet is separate from the existing server subnet.
+
+## 5. CR5 — 25% User Growth
+
+The departmental subnets are designed to accommodate the specified growth without changing their existing network addresses.
+
+| Department      | Current Users | Target After Growth | Subnet |
+| --------------- | ------------: | ------------------: | ------ |
+| Booking         |            30 |                  38 | `/26`  |
+| Tour Operations |            30 |                  38 | `/26`  |
+| Finance         |            15 |                  19 | `/27`  |
+| Marketing       |            15 |                  19 | `/27`  |
+| Guest Wi-Fi     |            60 |                  75 | `/25`  |
+
+The listed subnets have sufficient host capacity for these targets, including one reserved gateway address per subnet. The separate `172.30.38.224/27` reserve subnet provides additional capacity for future expansion.
+
+## 6. VLANs and Inter-VLAN Routing
+
+The following VLANs are configured:
+
+* **VLAN 10:** Booking
+* **VLAN 20:** Tour Operations
+* **VLAN 30:** Finance
+* **VLAN 40:** Marketing
+* **VLAN 80:** Guest Wi-Fi
+* **VLAN 99:** Servers
+* **VLAN 1:** Management
+
+Inter-VLAN routing is implemented on the Cisco 3560 multilayer core switch using switched virtual interfaces (SVIs). DHCP relay is configured on the departmental and guest VLAN interfaces to forward client requests to the centralized DHCP server.
+
+## 7. Network Services
+
+* **DHCP:** Centralized address assignment from `172.30.38.195`.
+* **DNS:** Name resolution through `172.30.38.195`.
+* **Web Server:** `172.30.38.194`.
+* **Internal DNS Domain:** `phenyotours.local`.
+* **Website Hostname:** `www.phenyotours.co.za`.
+* **Guest Wireless Network:** `Phenyo-Guest`, assigned to VLAN 80.
+* **Staff Wireless Network:** `Phenyo-Staff`.
+* **Management Network:** VLAN 1.
+
+## 8. Security Implementation
+
+The network uses the following device-administration security controls:
+
+* Enable secret configured on network devices.
+* Password encryption enabled.
+* Local administrative account configured.
+* Console authentication enabled.
+* SSH version 2 configured for remote administration.
+* Telnet disabled on configured VTY lines.
+* Login warning banner configured.
+* Port security enabled on designated access ports.
+
+### Port Security
+
+The access-port security configuration includes:
+
+* Sticky MAC address learning.
+* Maximum of two MAC addresses per port.
+* Violation mode set to `restrict`.
+* Verification using Cisco IOS `show port-security` commands.
+
+These controls limit the number of MAC addresses learned on protected access ports and restrict traffic when a security violation occurs.
+
+## 9. Testing and Verification
+
+The following checks were performed during implementation:
+
+* Verified VLAN interfaces and gateway addresses.
+* Verified connected networks using `show ip route`.
+* Tested DHCP address assignment on departmental and wireless clients.
+* Tested connectivity to gateways and the DHCP/DNS server.
+* Tested DNS resolution for `www.phenyotours.co.za` and `phenyotours.local`.
+* Opened the website through its DNS hostname.
+* Verified port-security status and violation counters.
+* Verified SSH version 2.
+* Tested staff and guest wireless connectivity.
+
+Screenshots documenting these tests should be stored in `Testing/`.
+
+## 10. Project Evidence
+
+Recommended evidence files inside `Testing/`:
+
+* `01_Network_Topology.png`
+* `02_VLANs.png`
+* `03_Routing_Table.png`
+* `04_Booking_Connectivity.png`
+* `05_Website_DNS_Test.png`
+* `06_Port_Security.png`
+* `07_SSH_Security.png`
+
+The actual filenames may differ if your screenshots were saved under different names. Update this list to match the files uploaded to GitHub.
+
+## 11. Project Files
+
+* **Network design:** `Design/`
+* **Device configurations:** `Configs/`
+* **Documentation:** `Docs/`
+* **Packet Tracer project:** `PacketTracer/`
+* **Testing evidence:** `Testing/`
+
+The final submission should include the saved Cisco Packet Tracer project, supporting documentation, screenshots, and the required demonstration video.
+
+## 12. Conclusion
+
+The project implements a segmented network with inter-VLAN routing, centralized network services, wireless connectivity, and device-administration security. Connectivity and service tests were performed to verify the main network functions.
+
+Any remaining wireless-controller requirements should be documented according to the functionality that was successfully configured and verified.
